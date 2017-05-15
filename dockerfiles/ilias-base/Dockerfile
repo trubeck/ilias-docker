@@ -5,6 +5,7 @@ MAINTAINER Kevin Krummenauer <kevin@whiledo.de>
 #no mysql-client and no mysql-server, because they should run in a separate Docker container
 RUN apt-get update && apt-get install -y \
 	wget \
+	git \
 	zip \
 #	apache2 \ #already installed in baseimage
 	php5 \
@@ -18,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 	imagemagick \
 	mysql-client \
 	sendmail
-#	openjdk-7-jdk #not needed most times, install it with apt-get install -y openjdk-7-jdk if you need 
+#	openjdk-9-jdk #not needed most times, install it with apt-get install -y openjdk-7-jdk if you need 
 
 WORKDIR /data
 ADD resources /data/resources/base
@@ -44,10 +45,11 @@ RUN sed -i 's/max_execution_time/;max_execution_time/g' /etc/php5/apache2/php.in
 && cat /data/resources/base/phpinisettings >> /etc/php5/apache2/php.ini
 
 #Then download ilias, unzip it and restart apache2
-RUN wget https://github.com/ILIAS-eLearning/ILIAS/archive/v5.0.3.tar.gz -O /data/resources/base/ilias.tar.gz \
-&& tar xzvf /data/resources/base/ilias.tar.gz -C /var/www/html/ \
-&& mv /var/www/html/ILIAS-5.0.3 /var/www/html/ilias \
-&& rm /data/resources/base/ilias.tar.gz
+RUN git clone https://github.com/ILIAS-eLearning/ILIAS.git /data/resources/base/ilias \
+&& cd /data/resources/base/ilias/ \
+&& git checkout release_5-2 \
+&& mv /data/resources/base/ilias /var/www/html/ilias \
+&& rm -rf /data/resources/base/ilias
 
 #RUN unzip /data/resources/base/ILIAS-5.0.3.zip -d /var/www/html/ \
 #&& mv /var/www/html/ILIAS-5.0.3 /var/www/html/ilias \
@@ -59,6 +61,7 @@ RUN chown -R www-data:www-data /var/www/html/ilias \
 && chmod 751 /opt/iliasdata \
 
 && mkdir /data/share \
+&& mv /data/resources/base/ilias.tar.gz /data/share/ \
 && chown www-data:www-data /data/share \
 && chmod 751 /data/share \
 
